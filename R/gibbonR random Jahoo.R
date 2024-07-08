@@ -29,11 +29,13 @@ DanumMFCCDFNoise <- MFCCFunction(input.dir=SampleFolders[2],
 
 DanumMFCCDFTrain <- rbind.data.frame(DanumMFCCDF,DanumMFCCDFNoise)
 
-DanumMFCCDFTrain$signal <- as.factor(DanumMFCCDFTrain$signal )
+DanumMFCCDFTrain$class <- as.factor(DanumMFCCDFTrain$class )
 
-TestFileDirectory <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/DanumValley/SoundFiles/'
+TestFileDirectory <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/SoundFiles/'
 
-OutputDirectory <- 'data/gibbonR/'
+OutputDirectory <- paste('/Volumes/DJC Files/JahooGibbonModelsRandomgibbonR/',basename(RandomFolders[i]),sep='')
+dir.create(OutputDirectory,recursive = TRUE)
+
 
 gibbonR(input=TestFileDirectory,
         input.type='directory',

@@ -23,7 +23,7 @@ spectrogram_images(
 # Train model over random samples ---------------------------------------------------------
 ListRandomFolders <- list.files('/Volumes/DJC Files/JahooGibbonClipsRandomImages',full.names = TRUE)
 
-for(b in 1:length(ListRandomFolders)){
+for(b in 47:length(ListRandomFolders)){
 
 # Location of spectrogram images for training
 input.data.path <-  ListRandomFolders[b]
@@ -40,12 +40,9 @@ Nsamplenumeric <- as.numeric(str_split_fixed(trainingfolder.short,'samples',2)[,
 epoch.iterations <- c(5)
 
 # Train the models specifying different architectures
-if(Nsamplenumeric > 32){
 
-  batch_size = 32
-} else{
-  batch_size = round(Nsamplenumeric*0.3,0)
-}
+batch_size = round(Nsamplenumeric*0.3,0)
+
 
 freeze.param <- c(TRUE)
 
@@ -80,21 +77,21 @@ freeze.param <- c(TRUE)
 
    ModelList <- ModelPath[str_detect(ModelPath,'.pt')]
 
-   for(c in 1:length(ModelList)){
+   for(k in 1:length(ModelList)){ tryCatch({
+   print(k)
+   ModelPath <- ModelList[k]
+   ModelName <- str_split_fixed(basename(ModelList[k]),'_model',n=2)[,1]
 
-   ModelPath <- ModelList[c]
-   ModelName <- str_split_fixed(basename(ModelList[c]),'_model',n=2)[,1]
-
-   OutputFolder <- paste('/Volumes/DJC Files/JahooTestDataPerformancegibbonNetR/',ModelName,sep='')
+   OutputFolder <- paste('/Volumes/DJC Files/JahooTestDataPerformancegibbonNetR/',ModelName,'/',sep='')
 
    WavFiles <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/SoundFiles'
 
    deploy_CNN_binary (
      clip_duration = 12,
      architecture='resnet50',
-     output_folder = paste(OutputFolder,'\\Images\\',sep=''),
-     output_folder_selections = paste(OutputFolder,'\\Selections\\',sep=''),
-     output_folder_wav = paste(OutputFolder,'\\Wavs\\',sep=''),
+     output_folder = paste(OutputFolder,'/Images/',sep=''),
+     output_folder_selections = paste(OutputFolder,'/Selections/',sep=''),
+     output_folder_wav = paste(OutputFolder,'/Wavs/',sep=''),
      detect_pattern=NA,
      top_model_path = ModelPath,
      path_to_files = WavFiles,
@@ -106,5 +103,8 @@ freeze.param <- c(TRUE)
      max_freq_khz = 3
    )
 
+   }, error = function(e) {
+     cat("ERROR :", conditionMessage(e), "\n")
+   })
 }
 
