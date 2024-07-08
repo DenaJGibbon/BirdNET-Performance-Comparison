@@ -7,6 +7,7 @@ library(data.table) # For sorting the detections
 library(ggplot2)
 library(ROCR)
 library(pROC)
+library(plyr)
 
 # NOTE you need to change the file paths below to where your files are located on your computer
 detect.class <- 'gibbon'
@@ -19,8 +20,8 @@ PerformanceFolders <- list.files('/Volumes/DJC Files/JahooGibbonTestDataPerforma
 TestDataSet <-  list.files('/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/AnnotatedFiles',
                            full.names = TRUE)
 
-start.time.buffer <- 6
-end.time.buffer <- 6
+start.time.buffer <- 8
+end.time.buffer <- 8
 
 CombinedF1data <- data.frame()
 
@@ -42,6 +43,9 @@ for(z in 1:length(PerformanceFolders)){
     TempTopModelTable <- read.delim2(TopModelresults[a])
 
     TempTopModelTable <- TempTopModelTable[,-c(4,5)]
+
+    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(Gibbons = detect.class))
+    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(CrestedGibbons = detect.class))
 
     TempTopModelTable <- subset(TempTopModelTable,Common.Name==detect.class)
 
@@ -207,18 +211,27 @@ CombinedF1data$F1 <- round(CombinedF1data$F1,1)
 # CombinedF1data$samples <- factor(CombinedF1data$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                                                     "All samples (LQ)", "All samples (HQ)"))
 
-AUCPlot <- ggpubr::ggboxplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
-F1Plot <- ggpubr::ggboxplot(data=CombinedF1data,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Confidence')
-ggpubr::ggboxplot(data=CombinedF1data,x='Thresholds',y='Precision',facet.by = 'samples')
-PrecRec <- ggpubr::ggboxplot(data=CombinedF1data,x='Precision',y='Recall',facet.by = 'samples')
+AUCPlot <- ggpubr::ggerrorplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+F1Plot <- ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Confidence')
+ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='Precision',facet.by = 'samples')
+PrecRec <- ggpubr::ggerrorplot(data=CombinedF1data,x='Precision',y='Recall',facet.by = 'samples')
 
 #pdf('birdNET_results.pdf',height=12,width=11)
 AUCPlot
-F1Plot
+F1Plot + geom_hline(yintercept = 0.8, color='red',linetype='dashed')
 PrecRec
 #cowplot::plot_grid(AUCPlot,F1Plot,PrecRec,nrow=3,labels = c('A)','B)','C)'),label_x = 0.9, label_y = 0.98)
 #graphics.off()
 ggpubr::ggboxplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
 
-max(CombinedF1data$F1)
+CombinedF1data[which.max(CombinedF1data$F1),]
+subset(CombinedF1data,F1 > 0.65)
+
+
+MaxF1Plot <- CombinedF1data %>%
+  dplyr::group_by(samples) %>%
+  dplyr::summarise(F1 = max(F1, na.rm=TRUE))
+
+
+ggpubr::ggscatter(data=MaxF1Plot,x='samples',y='F1')
 
