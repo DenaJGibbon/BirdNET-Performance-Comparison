@@ -13,7 +13,7 @@ library(plyr)
 detect.class <- 'gibbon'
 
 #  Performance Binary --------------------------------------------------------
-PerformanceFolders <- list.files('/Volumes/DJC Files/JahooGibbonTestDataPerformanceSmall/',
+PerformanceFolders <- list.files('/Volumes/DJC Files/JahooTestDataPerformancegibbonNetR/',
                                  full.names = TRUE)
 
 # Get a list of annotation selection table files
@@ -23,12 +23,12 @@ TestDataSet <-  list.files('/Volumes/DJC Files/MultiSpeciesTransferLearning/Wide
 start.time.buffer <- 12
 end.time.buffer <- 3
 
-CombinedF1dataBirdNET <- data.frame()
+CombinedF1data <- data.frame()
 
-for(z in 1:length(PerformanceFolders)){
+for(z in 1:length(PerformanceFolders)){ tryCatch({
   print(paste('processing', z, 'out of', length(PerformanceFolders)))
   # Get a list of TopModel result files
-  TopModelresults <- list.files(PerformanceFolders[[z]],
+  TopModelresults <- list.files(paste(PerformanceFolders[[z]],'/Selections/',sep=''),
                                 full.names = TRUE)
 
   # Preallocate space for TopModelDetectionDF
@@ -38,19 +38,14 @@ for(z in 1:length(PerformanceFolders)){
 
   # Loop through each TopModel result file
   for (a in Seq) {
+
     # Read the TopModel result table into a data frame
     TempTopModelTable <- read.delim2(TopModelresults[a])
 
-    TempTopModelTable <- TempTopModelTable[,-c(4,5)]
-
-    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(Gibbons = detect.class))
-    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(CrestedGibbons = detect.class))
-
-    TempTopModelTable <- subset(TempTopModelTable,Common.Name==detect.class)
-
     # Extract the short name of the TopModel result file
     ShortName <- basename(TopModelresults[a])
-    ShortName <- str_split_fixed(ShortName, pattern = '.BirdNET', n = 2)[, 1]
+    ShortName <- str_split_fixed(ShortName, pattern = '.wav', n = 2)[, 1]
+    ShortName <- str_split_fixed(ShortName, pattern = '__', n = 2)[, 2]
 
     # Find the corresponding annotation selection table
     testDataIndex <- which(str_detect(TestDataSet, ShortName))
@@ -93,6 +88,7 @@ for(z in 1:length(PerformanceFolders)){
             TempRow$Class <- 'noise'
           }
 
+          TempRow$Detections <-  ShortName
           # Append TempRow to TopModelDetectionDF
           TopModelDetectionDF <- rbind.data.frame(TopModelDetectionDF, TempRow)
         }
@@ -107,12 +103,11 @@ for(z in 1:length(PerformanceFolders)){
         # Prepare missed detections data
         missed_detections <- missed_detections[, c("Selection", "View", "Channel", "Begin.Time..s.", "End.Time..s.", "Low.Freq..Hz.", "High.Freq..Hz.")]
         #missed_detections$Detections <- ShortName
-        missed_detections$Confidence <- 0
-        missed_detections$Species.Code <- detect.class
-        missed_detections$Common.Name <- detect.class
+        missed_detections$Probability <- 0
 
         missed_detections$Class <- detect.class
 
+        missed_detections$Detections <-  ShortName
         # Append missed detections to TopModelDetectionDF
         TopModelDetectionDF <- rbind.data.frame(TopModelDetectionDF, missed_detections)
       }
@@ -122,13 +117,10 @@ for(z in 1:length(PerformanceFolders)){
         missed_detections <- TestDataTable
         # Prepare missed detections data
         missed_detections <- missed_detections[, c("Selection", "View", "Channel", "Begin.Time..s.", "End.Time..s.", "Low.Freq..Hz.", "High.Freq..Hz.")]
-        missed_detections$Confidence <- 0
-        #missed_detections$Detections <- ShortName
-        missed_detections$Species.Code <- detect.class
-        missed_detections$Common.Name <- detect.class
+        missed_detections$Probability <- 0
 
         missed_detections$Class <- detect.class
-
+        missed_detections$Detections <-  ShortName
         # Append missed detections to TopModelDetectionDF
         TopModelDetectionDF <- rbind.data.frame(TopModelDetectionDF, missed_detections)
 
@@ -138,28 +130,27 @@ for(z in 1:length(PerformanceFolders)){
   }
 
 
-  TopModelDetectionDF$Class <- as.factor(TopModelDetectionDF$Class)
-
   # Convert Class column to a factor variable
   TopModelDetectionDF$Class <- as.factor(TopModelDetectionDF$Class)
 
   # Display unique values in the Class column
   unique(TopModelDetectionDF$Class)
 
-  # Define a vector of confidence Thresholds
+  TopModelDetectionDF$Probability <- as.numeric(  TopModelDetectionDF$Probability)
+  # Define a vector of Probability Thresholds
   Thresholds <-seq(0.1,0.9,0.1)
 
   # Create an empty data frame to store results
   BestF1data.framecrestedargusBinary <- data.frame()
 
   # Loop through each threshold value
-  for(a in 1:length(Thresholds)){
+  for(a in 1:length(Thresholds)){   tryCatch({
 
-    # Filter the subset based on the confidence threshold
+    # Filter the subset based on the Probability threshold
     TopModelDetectionDF_single <-TopModelDetectionDF
 
     TopModelDetectionDF_single$PredictedClass <-
-      ifelse(TopModelDetectionDF_single$Confidence  <=Thresholds[a], 'noise',detect.class)
+      ifelse(TopModelDetectionDF_single$Probability  <=Thresholds[a], 'noise',detect.class)
 
     # Calculate confusion matrix using caret package
     caretConf <- caret::confusionMatrix(
@@ -180,57 +171,64 @@ for(z in 1:length(PerformanceFolders)){
     TempF1Row <- cbind.data.frame(F1, Precision, Recall,FPR)
     TempF1Row$Thresholds <- Thresholds[a]
     BestF1data.framecrestedargusBinary <- rbind.data.frame(BestF1data.framecrestedargusBinary, TempF1Row)
-  }
 
+  }, error = function(e) {
+    cat("ERROR :", conditionMessage(e), "\n")
+  })
+  }
 
 
   BestF1data.framecrestedargusBinary$PerformanceFolder <- basename(PerformanceFolders[[z]])
 
-  pp <- as.numeric(TopModelDetectionDF$Confidence)
+  pp <- as.numeric(TopModelDetectionDF$Probability)
   ll <- TopModelDetectionDF$Class
 
 
-  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Confidence)))
+  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability)))
 
   BestF1data.framecrestedargusBinary$auc <- as.numeric(roc.s100b)
 
-
-  CombinedF1dataBirdNET <- rbind.data.frame(CombinedF1dataBirdNET,BestF1data.framecrestedargusBinary)
+  CombinedF1data <- rbind.data.frame(CombinedF1data,BestF1data.framecrestedargusBinary)
+}, error = function(e) {
+  cat("ERROR :", conditionMessage(e), "\n")
+})
 }
 
-CombinedF1dataBirdNET <- na.omit(CombinedF1dataBirdNET)
-CombinedF1dataBirdNET$samples <- as.numeric(str_split_fixed(CombinedF1dataBirdNET$PerformanceFolder,pattern = 'samples',n=2)[,1])
-CombinedF1dataBirdNET$Precision <- round(CombinedF1dataBirdNET$Precision,1)
-CombinedF1dataBirdNET$Recall <- round(CombinedF1dataBirdNET$Recall,1)
-CombinedF1dataBirdNET$F1 <- round(CombinedF1dataBirdNET$F1,1)
+CombinedF1data <- na.omit(CombinedF1data)
+CombinedF1data$samples <- str_split_fixed(CombinedF1data$PerformanceFolder,pattern = 'samples',n=2)[,1]
+CombinedF1data$samples <- as.numeric(str_split_fixed(CombinedF1data$samples ,pattern = '_',n=2)[,2])
+CombinedF1data$Precision <- round(CombinedF1data$Precision,1)
+CombinedF1data$Recall <- round(CombinedF1data$Recall,2)
+CombinedF1data$F1 <- round(CombinedF1data$F1,2)
 
-# levels(CombinedF1dataBirdNET$samples ) <- c("10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
+# levels(CombinedF1data$samples ) <- c("10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                      "5 samples", "All samples (LQ)", "All samples (HQ)")
 #
-# CombinedF1dataBirdNET$samples <- factor(CombinedF1dataBirdNET$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
+# CombinedF1data$samples <- factor(CombinedF1data$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                                                     "All samples (LQ)", "All samples (HQ)"))
 
-AUCPlot <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
-F1Plot <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Confidence')
-ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Thresholds',y='Precision',facet.by = 'samples')
-PrecRec <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Precision',y='Recall',facet.by = 'samples')
+AUCPlot <- ggpubr::ggerrorplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+F1Plot <- ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Probability')
+ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='Precision',facet.by = 'samples')
+PrecRec <- ggpubr::ggerrorplot(data=CombinedF1data,x='Precision',y='Recall',facet.by = 'samples')
 
 #pdf('birdNET_results.pdf',height=12,width=11)
 AUCPlot
 F1Plot + geom_hline(yintercept = 0.8, color='red',linetype='dashed')
 PrecRec
-#cowplot::plot_grid(AUCPlot,F1Plot,PrecRec,nrow=3,labels = c('A)','B)','C)'),label_x = 0.9, label_y = 0.98)
-#graphics.off()
-ggpubr::ggboxplot(data=CombinedF1dataBirdNET,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
 
-CombinedF1dataBirdNET[which.max(CombinedF1dataBirdNET$F1),]
-subset(CombinedF1dataBirdNET,F1 > 0.65)
+ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Probability')
 
+which.max(CombinedF1data$F1)
 
-MaxF1PlotBirdNET <- CombinedF1dataBirdNET %>%
+CombinedF1data[which.max(CombinedF1data$F1),]
+
+MaxF1PlotCNN <- CombinedF1data %>%
   dplyr::group_by(samples) %>%
   dplyr::summarise(F1 = max(F1, na.rm=TRUE))
 
+CNN <- ggpubr::ggline(data=CombinedF1data,x='samples',y='F1',add = "mean_se")+ggtitle('CNN')+ylim(0,1)+ geom_hline(yintercept = 0.9, color='red',linetype='dashed')
 
-BirdNET <- ggpubr::ggline(data=CombinedF1dataBirdNET,x='samples',y='F1',add = "mean_se")+ggtitle('BirdNET')+ylim(0,1)+ geom_hline(yintercept = 0.9, color='red',linetype='dashed')
+
+cowplot::plot_grid(BirdNET,CNN)
 

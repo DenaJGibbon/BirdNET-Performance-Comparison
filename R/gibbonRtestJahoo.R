@@ -54,7 +54,7 @@ ml.model.svm.jahoo <-
 ml.model.svm.jahoo$tot.accuracy
 
 
-JahooTestMFCCDF <- MFCCFunction(input.dir='/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/Clips/CrestedGibbons/',
+JahooTestMFCCDF <- MFCCFunction(input.dir='/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/CrestedGibbons/',
                                 min.freq = 400,
                                 max.freq = 3000,
                                 n.windows = 9,
@@ -63,7 +63,7 @@ JahooTestMFCCDF <- MFCCFunction(input.dir='/Volumes/DJC Files/MultiSpeciesTransf
                                 win.hop.time = 0.25)
 
 
-JahooMFCCDFTestNoise <- MFCCFunction(input.dir='/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/Clips/Noise/',
+JahooMFCCDFTestNoise <- MFCCFunction(input.dir='/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/Noise/',
                                      min.freq = 400,
                                      max.freq = 3000,
                                      n.windows = 9,
@@ -129,6 +129,7 @@ for(a in 1:length(Thresholds)){
   TempF1Row$Thresholds <- Thresholds[a]
   BestF1data.frameCrestedGibbonSVM <- rbind.data.frame(BestF1data.frameCrestedGibbonSVM, TempF1Row)
 }
+
 
 BestF1data.frameCrestedGibbonSVM
 max(na.omit(BestF1data.frameCrestedGibbonSVM$F1))

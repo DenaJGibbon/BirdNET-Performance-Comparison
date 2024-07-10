@@ -4,17 +4,17 @@ devtools::load_all("/Users/denaclink/Desktop/RStudioProjects/gibbonNetR")
 
 # Top model for Crested Gibbons -------------------------------------------
 
-trained_models_dir <- '/Users/denaclink/Desktop/RStudioProjects/Gibbon-transfer-learning-multispecies/model_output/top_models/cambodia_binary/'
+trained_models_dir <- '/Users/denaclink/Desktop/RStudioProjects/model_output/resnet_binary_cambodia/'
 
-image_data_dir <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/Images/'
+image_data_dir <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/'
 
 evaluate_trainedmodel_performance(trained_models_dir=trained_models_dir,
                                   image_data_dir=image_data_dir,
-                                  output_dir = "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/model_eval/",
+                                  output_dir = "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/model_eval_all/",
                                   positive.class='CrestedGibbons')
 
 
-PerformanceOutPutTrained <- gibbonNetR::get_best_performance(performancetables.dir= "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/model_eval/performance_tables_trained/",
+PerformanceOutPutTrained <- gibbonNetR::get_best_performance(performancetables.dir= "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/model_eval_all/performance_tables_trained/",
                                                              model.type = 'binary',class='Gibbons',Thresh.val =0.1)
 
 PerformanceOutPutTrained$f1_plot

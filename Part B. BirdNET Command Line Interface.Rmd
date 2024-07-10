@@ -1,4 +1,14 @@
 
+```{zsh, engine.opts='-i'}
+DATA_DIR="/Volumes/DJC Files/JahooGibbonClipsRandomSmall/"
+OUTPUT_DIR="/Volumes/DJC Files/JahooGibbonModelsRandomSmall/"
+
+cd /Users/denaclink/Documents/BirdNETUpdate/BirdNET-Analyzer
+conda activate birdnet-analyzer
+mkdir -p "$OUTPUT_DIR" && for FOLDER in "$DATA_DIR"/*; do if [ -d "$FOLDER" ]; then FOLDER_NAME=$(basename "$FOLDER"); INPUT_PATH="$FOLDER"; OUTPUT_PATH="$OUTPUT_DIR/${FOLDER_NAME}/${FOLDER_NAME}.tflite"; python train.py --i "$INPUT_PATH" --o "$OUTPUT_PATH" --fmin 500 --fmax 3000 && echo "Processed: $FOLDER_NAME"; fi; done
+
+```
+
 
 ```{zsh, engine.opts='-i'}
 DATA_DIR="/Volumes/DJC Files/JahooGibbonClipsRandomSmall/"
@@ -10,6 +20,12 @@ mkdir -p "$OUTPUT_DIR" && for FOLDER in "$DATA_DIR"/*; do if [ -d "$FOLDER" ]; t
 
 ```
 
+```{zsh, engine.opts='-i'}
+cd /Users/denaclink/Documents/BirdNETUpdate/BirdNET-Analyzer
+conda activate birdnet-analyzer
+python analyze.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/" --classifier "/Volumes/DJC Files/JahooGibbonModelsRandom/213samples_1/213samples_1_JahooGibbon_Classifier_comparison.tflite" --o "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/BirdNETComparisonIgnoreWindows" --fmin 500 --fmax 3000
+
+```
 
 ```{zsh, engine.opts='-i'}
 
