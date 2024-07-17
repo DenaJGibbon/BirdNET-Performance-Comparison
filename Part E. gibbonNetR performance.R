@@ -20,7 +20,7 @@ PerformanceFolders <- list.files('/Volumes/DJC Files/JahooTestDataPerformancegib
 TestDataSet <-  list.files('/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/AnnotatedFiles',
                            full.names = TRUE)
 
-start.time.buffer <- 12
+start.time.buffer <- 6
 end.time.buffer <- 3
 
 CombinedF1data <- data.frame()
@@ -180,11 +180,7 @@ for(z in 1:length(PerformanceFolders)){ tryCatch({
 
   BestF1data.framecrestedargusBinary$PerformanceFolder <- basename(PerformanceFolders[[z]])
 
-  pp <- as.numeric(TopModelDetectionDF$Probability)
-  ll <- TopModelDetectionDF$Class
-
-
-  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability)))
+  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability),levels=c("noise", "gibbon")))
 
   BestF1data.framecrestedargusBinary$auc <- as.numeric(roc.s100b)
 
@@ -224,11 +220,17 @@ which.max(CombinedF1data$F1)
 CombinedF1data[which.max(CombinedF1data$F1),]
 
 MaxF1PlotCNN <- CombinedF1data %>%
-  dplyr::group_by(samples) %>%
+  dplyr::group_by(PerformanceFolder) %>%
   dplyr::summarise(F1 = max(F1, na.rm=TRUE))
 
-CNN <- ggpubr::ggline(data=CombinedF1data,x='samples',y='F1',add = "mean_se")+ggtitle('CNN')+ylim(0,1)+ geom_hline(yintercept = 0.9, color='red',linetype='dashed')
+MaxF1PlotCNN$samples <- str_split_fixed(MaxF1PlotCNN$PerformanceFolder,pattern = 'samples',n=2)[,1]
+MaxF1PlotCNN$samples <- as.numeric(str_split_fixed(MaxF1PlotCNN$samples ,pattern = '_',n=2)[,2])
 
 
-cowplot::plot_grid(BirdNET,CNN)
 
+CNN <- ggpubr::ggline(data=CombinedF1data,x='samples',y='F1',add = "mean_se")+
+ggtitle(paste('CNN Binary \n max F1:', max(CombinedF1data$F1))) +ylim(0,1)+xlab('')
+
+CombinedPlot <- cowplot::plot_grid(BirdNET,CNN)+xlab('Number of training samples')
+
+ggdraw(add_sub(CombinedPlot, "Number of training samples", vpadding=grid::unit(0,"lines"),y=6, x=0.5, vjust=4.5))

@@ -12,7 +12,7 @@ length(list.noise.wavs)
 output.dir.random <- '/Volumes/DJC Files/JahooGibbonClipsRandomSmall/'
 
 # Identify the maximum number of samples
-Max.n <- 20
+Max.n <- 300
 
 # Set the number of randomizations
 Random.n <- 5

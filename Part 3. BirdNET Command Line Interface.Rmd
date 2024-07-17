@@ -62,10 +62,10 @@ python analyze.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArray
 cd /Users/denaclink/Documents/BirdNETUpdate/BirdNET-Analyzer
 conda activate birdnet-analyzer
 
-python train.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/TrainingDataWavs/CombinedClipsBirdNET/" --o "/Volumes/DJC Files/JahooGibbonModelsRandomMulti/213samples_1/AddDanumsamples_1_JahooGibbon_Classifier_comparison.tflite" --fmin 500 --fmax 3000
+# python train.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/TrainingDataWavs/CombinedClipsBirdNET/" --o "/Volumes/DJC Files/JahooGibbonModelsRandomMulti/213samples_1/AddDanumsamples_1_JahooGibbon_Classifier_comparison.tflite" --fmin 500 --fmax 3000
 
 
-python analyze.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/" --classifier "/Volumes/DJC Files/JahooGibbonModelsRandomMulti/213samples_1/AddDanumsamples_1_JahooGibbon_Classifier_comparison.tflite"  --o "/Volumes/DJC Files/JahooGibbonTestDataPerformanceMulti/213samples_1" --fmin 500 --fmax 3000
+python analyze.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/SoundFiles/" --classifier "/Volumes/DJC Files/JahooGibbonModelsRandomMulti/213samples_1/AddDanumsamples_1_JahooGibbon_Classifier_comparison.tflite"  --o "/Volumes/DJC Files/JahooGibbonTestDataPerformanceMulti/213samples_1" --fmin 500 --fmax 3000
 
 ```
 
@@ -73,7 +73,7 @@ python analyze.py --i "/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArray
 ```{zsh, engine.opts='-i'}
 
 WAVS_DIR="/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/SoundFiles/"
-CLASSIFIERS_BASE_DIR="/Volumes/DJC Files/JahooGibbonModelsRandomMulti/"
+CLASSIFIERS_BASE_DIR="/Volumes/DJC Files/BirdNETMissing/"
 OUTPUT_BASE_DIR="/Volumes/DJC Files/JahooGibbonTestDataPerformanceMulti/" 
 
 # Activate conda environment and change to the working directory
