@@ -8,6 +8,7 @@ library(ggplot2)
 library(ROCR)
 library(pROC)
 library(plyr)
+library(cowplot)
 
 # NOTE you need to change the file paths below to where your files are located on your computer
 detect.class <- 'CrestedGibbons'
@@ -181,7 +182,8 @@ for(z in 1:length(PerformanceFolders)){ tryCatch({
   BestF1data.framecrestedargusBinary$PerformanceFolder <- basename(PerformanceFolders[[z]])
 
 
-  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability),levels=c("noise", "CrestedGibbons")))
+  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability),
+                       levels=c("noise", "CrestedGibbons"),direction="<"))
 
 
   BestF1data.framecrestedargusBinary$auc <- as.numeric(roc.s100b)
@@ -206,13 +208,13 @@ CombinedF1dataMulti$F1 <- round(CombinedF1dataMulti$F1,2)
 # CombinedF1dataMulti$samples <- factor(CombinedF1dataMulti$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                                                     "All samples (LQ)", "All samples (HQ)"))
 
-AUCPlot <- ggpubr::ggerrorplot(data=CombinedF1dataMulti,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+AUCPlotCNNMulti <- ggpubr::ggerrorplot(data=CombinedF1dataMulti,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
 F1Plot <- ggpubr::ggerrorplot(data=CombinedF1dataMulti,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Probability')
 ggpubr::ggerrorplot(data=CombinedF1dataMulti,x='Thresholds',y='Precision',facet.by = 'samples')
 PrecRec <- ggpubr::ggerrorplot(data=CombinedF1dataMulti,x='Precision',y='Recall',facet.by = 'samples')
 
 #pdf('birdNET_results.pdf',height=12,width=11)
-AUCPlot
+AUCPlotCNNMulti
 F1Plot + geom_hline(yintercept = 0.8, color='red',linetype='dashed')
 PrecRec
 
@@ -232,4 +234,18 @@ CNNmulti <- ggpubr::ggline(data=MaxF1PlotCNN,x='samples',y='F1',add = "mean_se")
 
 CombinedPlot <- cowplot::plot_grid(BirdNET,BirdNETmulti, CNN,CNNmulti)+xlab('Number of training samples')
 
-ggdraw(add_sub(CombinedPlot, "Number of training samples", vpadding=grid::unit(0,"lines"),y=6, x=0.5, vjust=4.5))
+CombinedPlot <-ggdraw(add_sub(CombinedPlot, "Number of training samples", vpadding=grid::unit(0,"lines"),y=6, x=0.5, vjust=4.5))
+
+# Add titles
+AUCPlotBirdNETBin <- AUCPlotBirdNETBin+ggtitle('BirdNET Binary')
+AUCPlotBirdNETMulti <- AUCPlotBirdNETMulti+ggtitle('BirdNET Multi')
+
+AUCPlotCNNBinary <- AUCPlotCNNBinary+ggtitle('CNN Binary')
+AUCPlotCNNMulti <- AUCPlotCNNMulti+ggtitle('CNN Multi')
+
+CombinedPlotAUC <- cowplot::plot_grid(AUCPlotBirdNETBin,AUCPlotBirdNETMulti, AUCPlotCNNBinary,AUCPlotCNNMulti)+xlab('Number of training samples')
+CombinedPlotAUC <- ggdraw(add_sub(CombinedPlotAUC, "Number of training samples", vpadding=grid::unit(0,"lines"),y=6, x=0.5, vjust=4.5))
+
+pdf('F1andAUC.pdf',height=14, width=12)
+cowplot::plot_grid(CombinedPlot,CombinedPlotAUC, labels = c('A)','B)'),label_x = 0.9,nrow = 2)
+graphics.off()

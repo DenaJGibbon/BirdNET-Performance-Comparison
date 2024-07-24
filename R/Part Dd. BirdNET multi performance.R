@@ -10,10 +10,10 @@ library(pROC)
 library(plyr)
 
 # NOTE you need to change the file paths below to where your files are located on your computer
-detect.class <- 'gibbon'
+detect.class <- 'CrestedGibbon'
 
 #  Performance Binary --------------------------------------------------------
-PerformanceFolders <- list.files('/Volumes/DJC Files/JahooGibbonTestDataPerformanceSmall/',
+PerformanceFolders <- list.files('/Volumes/DJC Files/JahooGibbonTestDataPerformanceMulti/',
                                  full.names = TRUE)
 
 # Get a list of annotation selection table files
@@ -23,7 +23,7 @@ TestDataSet <-  list.files('/Volumes/DJC Files/MultiSpeciesTransferLearning/Wide
 start.time.buffer <- 12
 end.time.buffer <- 3
 
-CombinedF1dataBirdNET <- data.frame()
+CombinedF1dataBirdNETmulti <- data.frame()
 
 for(z in 1:length(PerformanceFolders)){
   print(paste('processing', z, 'out of', length(PerformanceFolders)))
@@ -43,10 +43,8 @@ for(z in 1:length(PerformanceFolders)){
 
     TempTopModelTable <- TempTopModelTable[,-c(4,5)]
 
-    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(Gibbons = detect.class))
-    TempTopModelTable$Common.Name <- revalue(TempTopModelTable$Common.Name, c(CrestedGibbons = detect.class))
 
-    TempTopModelTable <- subset(TempTopModelTable,Common.Name==detect.class)
+    TempTopModelTable <- subset(TempTopModelTable,Common.Name==detect.class | Common.Name=='CrestedGibbons')
 
     # Extract the short name of the TopModel result file
     ShortName <- basename(TopModelresults[a])
@@ -191,52 +189,55 @@ for(z in 1:length(PerformanceFolders)){
 
 
   roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Confidence),
-                       levels=c("noise", "gibbon"),direction="<"))
+                       levels=c("noise", "CrestedGibbon"),direction="<"))
 
   BestF1data.framecrestedargusBinary$auc <- as.numeric(roc.s100b)
 
 
-  CombinedF1dataBirdNET <- rbind.data.frame(CombinedF1dataBirdNET,BestF1data.framecrestedargusBinary)
+  CombinedF1dataBirdNETmulti <- rbind.data.frame(CombinedF1dataBirdNETmulti,BestF1data.framecrestedargusBinary)
 }
 
-CombinedF1dataBirdNET <- na.omit(CombinedF1dataBirdNET)
-CombinedF1dataBirdNET$samples <- as.numeric(str_split_fixed(CombinedF1dataBirdNET$PerformanceFolder,pattern = 'samples',n=2)[,1])
-CombinedF1dataBirdNET$Precision <- round(CombinedF1dataBirdNET$Precision,1)
-CombinedF1dataBirdNET$Recall <- round(CombinedF1dataBirdNET$Recall,1)
-CombinedF1dataBirdNET$F1 <- round(CombinedF1dataBirdNET$F1,1)
+CombinedF1dataBirdNETmulti <- na.omit(CombinedF1dataBirdNETmulti)
+CombinedF1dataBirdNETmulti$samples <- as.numeric(str_split_fixed(CombinedF1dataBirdNETmulti$PerformanceFolder,pattern = 'samples',n=2)[,1])
+CombinedF1dataBirdNETmulti$Precision <- round(CombinedF1dataBirdNETmulti$Precision,1)
+CombinedF1dataBirdNETmulti$Recall <- round(CombinedF1dataBirdNETmulti$Recall,1)
+CombinedF1dataBirdNETmulti$F1 <- round(CombinedF1dataBirdNETmulti$F1,1)
 
-# levels(CombinedF1dataBirdNET$samples ) <- c("10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
+# levels(CombinedF1dataBirdNETmulti$samples ) <- c("10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                      "5 samples", "All samples (LQ)", "All samples (HQ)")
 #
-# CombinedF1dataBirdNET$samples <- factor(CombinedF1dataBirdNET$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
+# CombinedF1dataBirdNETmulti$samples <- factor(CombinedF1dataBirdNETmulti$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                                                     "All samples (LQ)", "All samples (HQ)"))
 
-AUCPlotBirdNETBin <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
-F1Plot <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Confidence')
-ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Thresholds',y='Precision',facet.by = 'samples')
-PrecRec <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNET,x='Precision',y='Recall',facet.by = 'samples')
+AUCPlotBirdNETMulti <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNETmulti,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+F1Plot <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNETmulti,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Confidence')
+ggpubr::ggerrorplot(data=CombinedF1dataBirdNETmulti,x='Thresholds',y='Precision',facet.by = 'samples')
+PrecRec <- ggpubr::ggerrorplot(data=CombinedF1dataBirdNETmulti,x='Precision',y='Recall',facet.by = 'samples')
 
-#pdf('birdNET_results.pdf',height=12,width=11)
-AUCPlotBirdNETBin
+#pdf('BirdNETmulti_results.pdf',height=12,width=11)
+AUCPlotBirdNETMulti
 F1Plot + geom_hline(yintercept = 0.8, color='red',linetype='dashed')
 PrecRec
-#cowplot::plot_grid(AUCPlotBirdNETBin,F1Plot,PrecRec,nrow=3,labels = c('A)','B)','C)'),label_x = 0.9, label_y = 0.98)
+#cowplot::plot_grid(AUCPlotBirdNETMulti,F1Plot,PrecRec,nrow=3,labels = c('A)','B)','C)'),label_x = 0.9, label_y = 0.98)
 #graphics.off()
-ggpubr::ggboxplot(data=CombinedF1dataBirdNET,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+ggpubr::ggboxplot(data=CombinedF1dataBirdNETmulti,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
 
-CombinedF1dataBirdNET[which.max(CombinedF1dataBirdNET$F1),]
-subset(CombinedF1dataBirdNET,F1 > 0.65)
+CombinedF1dataBirdNETmulti[which.max(CombinedF1dataBirdNETmulti$F1),]
+CombinedF1dataBirdNETmulti[which.max(CombinedF1dataBirdNETmulti$F1),]
 
 
-MaxF1PlotBirdNET <- CombinedF1dataBirdNET %>%
+MaxF1PlotBirdNETmulti <- CombinedF1dataBirdNETmulti %>%
   dplyr::group_by(PerformanceFolder) %>%
   dplyr::summarise(F1 = max(F1, na.rm=TRUE))
 
-MaxF1PlotBirdNET$samples <- str_split_fixed(MaxF1PlotBirdNET$PerformanceFolder,pattern = 'samples',n=2)[,1]
-MaxF1PlotBirdNET$samples <- as.numeric(MaxF1PlotBirdNET$samples)
+MaxF1PlotBirdNETmulti$samples <- str_split_fixed(MaxF1PlotBirdNETmulti$PerformanceFolder,pattern = 'samples',n=2)[,1]
+MaxF1PlotBirdNETmulti$samples <- as.numeric(MaxF1PlotBirdNETmulti$samples)
 
 
 
-BirdNET <- ggpubr::ggline(data=MaxF1PlotBirdNET,x='samples',y='F1',add = "mean_se")+
-  ggtitle(paste('BirdNET Binary \n max F1:', max(MaxF1PlotBirdNET$F1))) +ylim(0,1)+xlab('')
-BirdNET
+BirdNETmulti <- ggpubr::ggline(data=MaxF1PlotBirdNETmulti,
+                               x='samples',y='F1',add = "mean_se")+
+  ggtitle(paste('BirdNET multi \n max F1:', max(MaxF1PlotBirdNETmulti$F1))) +ylim(0,1)+xlab('')
+
+BirdNETmulti
+

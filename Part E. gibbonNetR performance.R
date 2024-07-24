@@ -180,7 +180,8 @@ for(z in 1:length(PerformanceFolders)){ tryCatch({
 
   BestF1data.framecrestedargusBinary$PerformanceFolder <- basename(PerformanceFolders[[z]])
 
-  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability),levels=c("noise", "gibbon")))
+  roc.s100b <- auc(roc(response=TopModelDetectionDF$Class,predictor= as.numeric(TopModelDetectionDF$Probability),
+                       levels=c("noise", "gibbon"),direction="<"))
 
   BestF1data.framecrestedargusBinary$auc <- as.numeric(roc.s100b)
 
@@ -203,13 +204,13 @@ CombinedF1data$F1 <- round(CombinedF1data$F1,2)
 # CombinedF1data$samples <- factor(CombinedF1data$samples, levels = c("5 samples","10 samples", "15 samples", "20 samples", "25 samples", "30 samples",
 #                                                                     "All samples (LQ)", "All samples (HQ)"))
 
-AUCPlot <- ggpubr::ggerrorplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
+AUCPlotCNNBinary <- ggpubr::ggerrorplot(data=CombinedF1data,x='samples',y='auc')+xlab('')+ylab('AUC')+ylim(0,1)
 F1Plot <- ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='F1',facet.by = 'samples')+ylim(0,1)+xlab('Probability')
 ggpubr::ggerrorplot(data=CombinedF1data,x='Thresholds',y='Precision',facet.by = 'samples')
 PrecRec <- ggpubr::ggerrorplot(data=CombinedF1data,x='Precision',y='Recall',facet.by = 'samples')
 
 #pdf('birdNET_results.pdf',height=12,width=11)
-AUCPlot
+AUCPlotCNNBinary
 F1Plot + geom_hline(yintercept = 0.8, color='red',linetype='dashed')
 PrecRec
 

@@ -44,7 +44,7 @@ gibbonR(input=TestFileDirectory,
         tune = TRUE,
         short.wav.duration=300,
         target.signal = c("Gibbons"),
-        min.freq = 400, max.freq = 1600,
+        min.freq = 500, max.freq = 3000,
         noise.quantile.val=0.15,
         #time.window.number =3,
         n.windows = 9, num.cep = 12,
@@ -62,3 +62,5 @@ gibbonR(input=TestFileDirectory,
         random.sample='NA')
 
 }
+
+

@@ -98,7 +98,7 @@ CrestedGibbonBirdNETMultiPlot <- ggplot(data = BestF1data.frameCrestedGibbonBird
   geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
   geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
   geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
-  labs(title = paste("Crested Gibbons (Bird NETMulti) \n",'Max F1=', MaxF1BirdNETMulti),
+  labs(title = paste("Crested Gibbons (BirdNET Multi) \n",'Max F1=', MaxF1BirdNETMulti),
        x = "Confidence",
        y = "Values") +
   scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
@@ -210,7 +210,7 @@ CrestedGibbonBirdNETPlot <- ggplot(data = BestF1data.frameCrestedGibbonBirdNET, 
   geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
   geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
   geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
-  labs(title = paste("Crested Gibbons (BirdNET) \n",'Max F1=', MaxF1BirdNET),
+  labs(title = paste("Crested Gibbons (BirdNET Binary) \n",'Max F1=', MaxF1BirdNET),
        x = "Confidence",
        y = "Values") +
   scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
@@ -229,7 +229,7 @@ CrestedGibbonCNNBinary <- ggplot(data = CrestedTopBinary, aes(x = Threshold)) +
   geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
   geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
   geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
-  labs(title = paste("Crested Gibbons (CNN Binary) \n",'Max F1=', MaxF1Binary),
+  labs(title = paste("Crested Gibbons (ResNet50 Binary) \n",'Max F1=', MaxF1Binary),
        x = "Confidence",
        y = "Values") +
   scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
@@ -247,7 +247,7 @@ CrestedGibbonCNNMulti <- ggplot(data = CrestedTopMulti, aes(x = Threshold)) +
   geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
   geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
   geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
-  labs(title = paste("Crested Gibbons (CNN Multi) \n",'Max F1=', MaxF1Multi),
+  labs(title = paste("Crested Gibbons (ResNet50 Multi) \n",'Max F1=', MaxF1Multi),
        x = "Confidence",
        y = "Values") +
   scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
@@ -269,7 +269,7 @@ CrestedGibbonSVMPlot <- ggplot(data = BestF1data.frameCrestedGibbonSVM, aes(x = 
   geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
   geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
   geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
-  labs(title = paste("Crested Gibbons (SVM + MFCC) \n",'Max F1=', MaxF1SVM),
+  labs(title = paste("Crested Gibbons Binary (SVM + MFCC) \n",'Max F1=', MaxF1SVM),
        x = "Confidence",
        y = "Values") +
   scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
@@ -282,5 +282,30 @@ CrestedGibbonSVMPlot <- ggplot(data = BestF1data.frameCrestedGibbonSVM, aes(x = 
 CrestedGibbonSVMPlot
 
 
-cowplot::plot_grid(CrestedGibbonSVMPlot,CrestedGibbonBirdNETPlot,CrestedGibbonBirdNETMultiPlot,CrestedGibbonCNNBinary,CrestedGibbonCNNMulti)
+BestF1data.frameCrestedGibbonSVMMulti <- read.csv('data/BestF1data.frameCrestedGibbonSVMMulti.csv')
+MaxF1SVMMulti <- round(max( na.omit(BestF1data.frameCrestedGibbonSVMMulti$F1)),2)
+
+# Metric plot
+CrestedGibbonSVMMultiPlot <- ggplot(data = BestF1data.frameCrestedGibbonSVMMulti, aes(x = Thresholds)) +
+  geom_line(aes(y = F1, color = "F1", linetype = "F1")) +
+  geom_line(aes(y = Precision, color = "Precision", linetype = "Precision")) +
+  geom_line(aes(y = Recall, color = "Recall", linetype = "Recall")) +
+  labs(title = paste("Crested Gibbons Multi (SVM + MFCC) \n",'Max F1=', MaxF1SVMMulti),
+       x = "Confidence",
+       y = "Values") +
+  scale_color_manual(values = c("F1" = "blue", "Precision" = "red", "Recall" = "green"),
+                     labels = c("F1", "Precision", "Recall")) +
+  scale_linetype_manual(values = c("F1" = "dashed", "Precision" = "dotted", "Recall" = "solid")) +
+  theme_minimal() +
+  theme(legend.title = element_blank())+
+  labs(color  = "Guide name", linetype = "Guide name", shape = "Guide name")+ylim(0,1)
+
+CrestedGibbonSVMMultiPlot
+
+cowplot::plot_grid(CrestedGibbonSVMPlot, CrestedGibbonSVMMultiPlot,
+                   CrestedGibbonKooguBinaryPlot,CrestedGibbonKooguMultiPlot,
+                   CrestedGibbonCNNBinary,CrestedGibbonCNNMulti,
+                   CrestedGibbonBirdNETPlot,CrestedGibbonBirdNETMultiPlot,
+                   nrow=4, labels=c('A)','B)','C)','D)','E)','F)','G)','H)'),
+                   label_x = 0.9)
 

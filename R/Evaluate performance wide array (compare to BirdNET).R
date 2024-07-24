@@ -6,7 +6,7 @@ devtools::load_all("/Users/denaclink/Desktop/RStudioProjects/gibbonNetR")
 
 trained_models_dir <- '/Users/denaclink/Desktop/RStudioProjects/model_output/resnet_binary_cambodia/'
 
-image_data_dir <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/ImagesIgnoreWindowsWavs/'
+image_data_dir <- '/Volumes/DJC Files/MultiSpeciesTransferLearning/WideArrayEvaluation/Jahoo/Images/'
 
 evaluate_trainedmodel_performance(trained_models_dir=trained_models_dir,
                                   image_data_dir=image_data_dir,

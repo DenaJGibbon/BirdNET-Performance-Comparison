@@ -2,8 +2,8 @@
 # Load necessary packages and functions
 devtools::load_all("/Users/denaclink/Desktop/RStudioProjects/gibbonNetR")
 
-TempFolder <- list.files('/Volumes/DJC Files/JahooGibbonClipsRandom',full.names = T)
-OutputDir <- '/Volumes/DJC Files/JahooGibbonClipsRandomImages/'
+TempFolder <- list.files('/Volumes/DJC Files/JahooGibbonClipsRandomSmallMulti',full.names = T)
+OutputDir <- '/Volumes/DJC Files/JahooClipsRandomImagesMulti/'
 
 for(a in 1:length(TempFolder)){
 
@@ -23,7 +23,7 @@ spectrogram_images(
 # Train model over random samples ---------------------------------------------------------
 ListRandomFolders <- list.files('/Volumes/DJC Files/JahooGibbonClipsRandomImages',full.names = TRUE)
 
-for(b in 47:length(ListRandomFolders)){
+for(b in 1:length(ListRandomFolders)){
 
 # Location of spectrogram images for training
 input.data.path <-  ListRandomFolders[b]
