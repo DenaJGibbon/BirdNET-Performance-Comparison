@@ -22,7 +22,7 @@ spectrogram_images(
 
 # Train model over random samples ---------------------------------------------------------
 ListRandomFolders <- list.files('/Volumes/DJC Files/JahooClipsRandomImagesMulti',full.names = TRUE)
-for(b in 27:36){
+for(b in c(1:5,12:16)){
 
 # Location of spectrogram images for training
 input.data.path <-  ListRandomFolders[b]

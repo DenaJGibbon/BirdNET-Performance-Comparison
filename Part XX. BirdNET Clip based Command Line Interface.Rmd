@@ -2,7 +2,7 @@
 ```{zsh, engine.opts='-i'}
 
 WAVS_DIR="/Volumes/DJC Files/MultiSpeciesTransferLearning/TestData/Vietnam/ValidationClipsVietnam/"
-CLASSIFIERS_BASE_DIR="/Volumes/DJC Files/JahooGibbonModelsRandom/"
+CLASSIFIERS_BASE_DIR="/Volumes/DJC Files/JahooGibbonModelsRandomSmall/"
 OUTPUT_BASE_DIR="/Volumes/DJC Files/BirdNETBinaryClipBasedVietnam/" 
 
 # Activate conda environment and change to the working directory

@@ -18,9 +18,11 @@ for(a in 1: length(ClipDetections)){
     TempDF <- TempDF[which.max(TempDF$Confidence),]
     ActualLabel <- basename(ClipDetectionsShort[a])
   } else{
-    # TempDF <- read.delim(ClipDetections[a])
-    # Confidence <- 1-max(TempDF$Confidence)
-  Confidence <- 0
+     TempDF <- read.delim(ClipDetections[a])
+
+
+     Confidence <- 1-max(TempDF$Confidence)
+
     ActualLabel <- basename(ClipDetectionsShort[a])
   }
 
@@ -133,9 +135,16 @@ for(a in 1: length(ClipDetections)){
   } else{
     TempDF <- read.delim(ClipDetections[a])
 
-    Confidence <- 0
+    TempDF <- subset(TempDF,Common.Name=='nocall')
+
+    if(nrow(TempDF) > 0){
+    Confidence <- 1- TempDF$Confidence
 
     ActualLabel <- basename(ClipDetectionsShort[a])
+    } else {
+      Confidence <- 0
+      ActualLabel <- basename(ClipDetectionsShort[a])
+    }
   }
 
   TempRow <- cbind.data.frame(Confidence, ActualLabel)

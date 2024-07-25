@@ -50,3 +50,19 @@ MaxF1PlotCNNMulti <- CombinedDFclipsmultiCNN %>%
 
 MaxF1PlotCNNMulti$samples <-  as.numeric(str_split_fixed(MaxF1PlotCNNMulti$Training.Data,'samples',n=2)[,1])
 ggpubr::ggline(data=MaxF1PlotCNNMulti,x='samples',y='F1',add = "mean_se")+ylim(0,1)+ggtitle('ResNet50 multi')
+
+MaxF1PlotBirdNETbinary$Model  <- 'BirdNET Binary'
+MaxF1PlotBirdNETmulti$Model  <- 'BirdNET Multi'
+MaxF1PlotCNNMulti$Model <- 'ResNet50 Multi'
+MaxF1PlotCNNBinary$Model <- 'ResNet50 Binary'
+
+colnames(MaxF1PlotCNNBinary) <- c("performancefolder", "F1", "samples", "Model")
+colnames(MaxF1PlotCNNMulti) <- c("performancefolder", "F1", "samples", "Model")
+
+CombinedPerformanceDF <- rbind.data.frame(MaxF1PlotCNNMulti,MaxF1PlotCNNBinary,
+                                          MaxF1PlotBirdNETbinary,MaxF1PlotBirdNETmulti)
+
+ggpubr::ggline(data=CombinedPerformanceDF,x='samples',y='F1', color='Model',
+               add = "mean_se")+ylim(0,1)+xlab('Number of training samples')+
+                scale_color_manual(values= c("#0080FF", "#00FFFF", "#80FF80", "#FF8000") )
+
