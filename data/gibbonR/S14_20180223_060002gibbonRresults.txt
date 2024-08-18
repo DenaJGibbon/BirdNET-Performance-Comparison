@@ -1,0 +1,4 @@
+Selection	View	Channel	Begin Time (s)	End Time (s)	Low Freq (Hz)	High Freq (Hz)	File Name	model.type	probability	signal
+1	Spectrogram 1	1	5401.59	5409.17	400	1600	S14_20180223_060002	SVM	0.286	Gibbons
+2	Spectrogram 1	1	5448.122	5454.892	400	1600	S14_20180223_060002	SVM	0.152	Gibbons
+3	Spectrogram 1	1	6913.571	6920.141	400	1600	S14_20180223_060002	SVM	0.276	Gibbons

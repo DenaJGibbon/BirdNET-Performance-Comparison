@@ -1,0 +1,31 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# BirdNET Performance Comparison
+
+## Overview
+
+This repository provides a comparative analysis of the BirdNET algorithm performance to that of Koogu, 'GibbonNetR', and a traditional ML approach that combines MFCC features with support vector machines. The code provided compares the different algorithms across various datasets and configurations.
+
+## Data availabilty
+Data needed to run the analyses can be found on Zenodo: https://zenodo.org/records/12706803.
+
+## Organization
+
+
+- **Data Processing**: Scripts to preprocess audio files and prepare them for BirdNET analysis.
+- **Model Evaluation**: Tools to evaluate BirdNET's performance on different datasets.
+- **Visualization**: Scripts to generate plots and charts that visualize BirdNET's accuracy and other performance metrics.
+- **Comparison Metrics**: Calculation of precision, recall, F1-score, and other relevant metrics.
+
+
