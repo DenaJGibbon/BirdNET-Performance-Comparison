@@ -16,13 +16,9 @@ and configurations.
 Data needed to run the analyses can be found on Zenodo:
 <https://zenodo.org/records/12706803>.
 
-## Organization
+## Organization (in th R folder)
 
-- **Data Processing**: Scripts to preprocess audio files and prepare
+- **data_processing**: Scripts to preprocess audio files and prepare
   them for BirdNET analysis.
-- **Model Evaluation**: Tools to evaluate BirdNET’s performance on
-  different datasets.
-- **Visualization**: Scripts to generate plots and charts that visualize
-  BirdNET’s accuracy and other performance metrics.
-- **Comparison Metrics**: Calculation of precision, recall, F1-score,
-  and other relevant metrics.
+- **models**: Contains the required scripts to train the models.
+- **plots**: Scripts to generate plots for publication.
