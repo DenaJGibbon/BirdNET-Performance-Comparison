@@ -16,9 +16,27 @@ and configurations.
 Data needed to run the analyses can be found on Zenodo:
 <https://zenodo.org/records/12706803>.
 
-## Organization (in th R folder)
+## Organization (in the R folder)
 
 - **data_processing**: Scripts to preprocess audio files and prepare
-  them for BirdNET analysis.
+  them for further analysis.
 - **models**: Contains the required scripts to train the models.
 - **plots**: Scripts to generate plots for publication.
+
+## Usage
+
+## Citation
+
+Please cite both if you use these data or methods:
+
+Clink, D., Cross-Jaya, H., Kim, J., Ahmad, A. H., Hong, M., Sala, R.,
+Birot, H., Agger, C., Vu, T. T., Thi, H. N., Chi, T. N., & Klinck, H.
+(2024). Dataset for “Benchmarking for the automated detection of
+southern yellow-cheeked crested gibbon calls from passive acoustic
+monitoring data” \[Data set\]. Zenodo.
+<https://doi.org/10.5281/zenodo.12706803>
+
+Clink DJ, Cross-Jaya H, Kim J, Ahmad AH, Hong M, Sala R, Birot H, Agger
+C, Vu TT, Thi HN, Chi TN. Benchmarking for the automated detection and
+classification of southern yellow-cheeked crested gibbon calls from
+passive acoustic monitoring data. bioRxiv. 2024:2024-08.
