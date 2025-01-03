@@ -1,9 +1,12 @@
 library(stringr)
 library(nasapower)
+library(tidyverse)
+library(ggridges)
 
 TP <- length(list.files('/Volumes/DJC Files/JahooGibbonBirdNETDetections/CrestedGibbons/Wav/Positive/'))
 FP <- length(list.files('/Volumes/DJC Files/JahooGibbonBirdNETDetections/CrestedGibbons/Wav/Negative/'))
 TP/(TP+FP) # Precision
+TP # number of positive detections
 
 TruePositiveDetections <- list.files('/Volumes/DJC Files/JahooGibbonBirdNETDetections/CrestedGibbons/Wav/Positive/')
 TruePositiveDetectionsSplit <-str_split_fixed(TruePositiveDetections, pattern = '_', n=8)
@@ -45,10 +48,6 @@ TruePositiveDF <- TruePositiveDF %>%
 
 # View the cleaned data
 head(TruePositiveDF)
-
-# Here you would proceed with your modeling code using 'unique_detections'
-
-print(unique_detections)
 
 
 
