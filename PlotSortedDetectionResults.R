@@ -2,6 +2,10 @@ library(stringr)
 library(nasapower)
 library(tidyverse)
 library(ggridges)
+library(scales)  # For time formatting
+
+
+set.seed(42)
 
 TP <- length(list.files('/Volumes/DJC Files/JahooGibbonBirdNETDetections/CrestedGibbons/Wav/Positive/'))
 FP <- length(list.files('/Volumes/DJC Files/JahooGibbonBirdNETDetections/CrestedGibbons/Wav/Negative/'))
@@ -23,7 +27,7 @@ TruePositiveDF$Hour <- as.numeric((TruePositiveDF$Hour))
 
 ggpubr::gghistogram(data=TruePositiveDF,x='Hour', facet.by="Recorder",stat="count")
 
-ggpubr::gghistogram(data=TruePositiveDF,x='Date', stat="count",facet.by="Recorder")
+ggpubr::gghistogram(data=TruePositiveDF,x='Date', stat="count")
 
 table(TruePositiveDF$Hour,TruePositiveDF$Date)
 
@@ -93,7 +97,7 @@ ggplot(ByHourRecorderDF_full, aes(x = Hour, y = Recorder, height = Freq, color =
     axis.title = element_text(size = 12),
     plot.title = element_text(size = 14, face = "bold")
   ) +
-  xlim(0, 23) +
+  xlim(0, 18) +
   guides(fill = 'none')
 
 rain_data <- get_power(
@@ -125,17 +129,32 @@ TruePositivePlot <- ggplot(TruePositiveDF, aes(x = Date)) +
 #rain_data$scaled_rainfall <- rain_data$PRECTOTCORR / 10  # Scale the rainfall
 rain_data$YYYYMMDD <- as.Date(rain_data$YYYYMMDD, format = "%Y%m%d")
 
-RainPlot<- ggplot(rain_data, aes(x = YYYYMMDD, y = PRECTOTCORR)) +
+# Define the monsoon period (May to October) for the years in your dataset
+monsoon_start_1 <- as.Date("2022-05-01")
+monsoon_end_1 <- as.Date("2022-10-31")
+monsoon_start_2 <- as.Date("2023-05-01")
+monsoon_end_2 <- as.Date("2023-10-31")
+
+# Create the plot
+RainPlot <- ggplot(rain_data, aes(x = YYYYMMDD, y = PRECTOTCORR)) +
   geom_line(color = "blue", size = 1) +  # Line graph for scaled rainfall
-  scale_y_continuous(
-    name = "Rainfall (mm/day)"
-  ) +
+  scale_y_continuous(name = "Rainfall (mm/day)") +
   labs(x = "Date", y = "Rainfall") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
     plot.title = element_text(size = 14, face = "bold")
-  )+xlab("")
+  ) +
+  xlab("") +
+  # Add shaded area for the monsoon period across multiple years
+  geom_rect(aes(xmin = monsoon_start_1, xmax = monsoon_end_1, ymin = -Inf, ymax = Inf),
+            fill = "lightblue", alpha = 0.01) +  # Light blue shading for 2022
+  geom_rect(aes(xmin = monsoon_start_2, xmax = monsoon_end_2, ymin = -Inf, ymax = Inf),
+            fill = "lightblue", alpha = 0.01)    # Light blue shading for 2023
+
+# Display the plot
+print(RainPlot)
+
 
 Tempplot <- ggplot(rain_data, aes(x = YYYYMMDD, y = T2M)) +
   geom_line(color = "red", size = 1) +  # Line graph for scaled rainfall
@@ -155,39 +174,57 @@ combined_plot <- RainPlot / Tempplot/TruePositivePlot
 # Print the combined plot
 print(combined_plot)
 
-# Extract and print the time
-library(lubridate)
-library(ggplot2)
+# Step 1: Aggregate the data by Date and Hour to get the total recorders and detections
+heatmap_data <- CombinedWeatherData_all %>%
+  group_by(Date, Hour) %>%
+  summarise(
+    total_recorders = n_distinct(Recorder),  # Count distinct recorders
+    detections = sum(Count > 0, na.rm = TRUE)  # Count recorders with detections (Count > 0)
+  )
 
-library(suncalc)
-library(ggplot2)
-library(lubridate)
+# Step 2: Calculate the proportion of recorders with detections
+heatmap_data <- heatmap_data %>%
+  mutate(proportion_detections = detections / total_recorders)  # Proportion of recorders with detections
 
-library(ggplot2)
-library(reshape2)
+# Step 3: Generate all combinations of Date and Hour
+complete_dates <- seq.Date(from = min(CombinedWeatherData_all$Date), to = max(CombinedWeatherData_all$Date), by = "day")
+complete_hours <- 0:23  # Assuming 24 hours for each day
 
-# Create the table and convert it to a data frame for ggplot
-heatmap_data <- as.data.frame(as.table(table(TruePositiveDF$Hour, TruePositiveDF$Date)))
-# Rename the columns for better understanding
-colnames(heatmap_data) <- c("Hour", "Date", "Count")
+# Create a dataframe with all combinations of Date and Hour
+complete_combinations <- expand.grid(Date = complete_dates, Hour = complete_hours)
 
-heatmap_data$Count <- ifelse(heatmap_data$Count==0,0,1)
+# Step 4: Merge with the aggregated data to get missing combinations (and handle them as NA)
+combined_data <- merge(complete_combinations, heatmap_data, by = c("Date", "Hour"), all.x = TRUE)
 
-# Convert columns to appropriate types
-heatmap_data$Hour <- as.numeric(as.character(heatmap_data$Hour))
-heatmap_data$Date <- as.Date(as.character(heatmap_data$Date))
+# Step 5: Replace NAs in proportion_detections with NA
+combined_data$proportion_detections[is.na(combined_data$proportion_detections)] <- NA
 
-# Plot the heatmap
-Hourbydateplot <- ggplot(heatmap_data, aes(x = Date, y = Hour, fill = Count)) +
-  geom_tile(color = "white") + # White borders for better visibility
-  scale_fill_gradient(low = "white", high = "blue", na.value = "grey") + # Gradient for counts
-  labs( x = "Date", y = "Hour", fill = "Count") +
+# Ensure that the Hour is numeric
+combined_data$Hour <- as.numeric(combined_data$Hour)
+
+# Subset the data to only include hours between 04:00 and 18:00
+combined_data <- subset(combined_data, Hour > 4 & Hour < 18)
+
+# Create the heatmap
+HeatMap <- ggplot(combined_data, aes(x = Date, y = Hour, fill = proportion_detections)) +
+  geom_tile(color = "white") +  # White borders for better visibility
+  scale_fill_gradient(low = "white", high = "black", na.value = "red") +  # Greyscale color palette
+  scale_y_continuous(
+    breaks = seq(5, 17, by = 2),  # Show every other hour
+    labels = sprintf("%02d:00", seq(5, 17, by = 2))  # Format labels as HH:00
+  ) + labs(x = "Date", y = "Hour (Local Time)", fill = "Proportion of Recorders with Detections") +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels
-    panel.grid.major = element_blank(), # Remove major gridlines
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+    panel.grid.major = element_blank(),  # Remove major gridlines
     panel.grid.minor = element_blank()  # Remove minor gridlines
-  )+guides(fill="none")
+  ) +
+  guides(fill = 'none')
+
+HeatMap
+
+BarPlot <- ggbarplot(data=combined_data,x='Date',y='proportion_detections')+ylab('Proportion of recorders \n with detections')
+
 
 TruePositiveDFSunrise <- getSunlightTimes(date = TruePositiveDF$Date,
                                           keep = c("sunrise"),
@@ -213,5 +250,76 @@ SunrisePlot <- ggplot(TruePositiveDFSunrise, aes(x = date, y = time)) +
   labs(x = "Date", y = "Sunrise Time (UTC+7)", ) +
   theme_minimal()
 
-TimeSunrisePlot <-  SunrisePlot / RainPlot/Hourbydateplot
-print(TimeSunrisePlot)
+# Combine the plots: Add the new plot to the left
+TimeSunrisePlot <- StandarizedBarplot | (HeatMap / SunrisePlot / RainPlot )
+
+TimeSunrisePlot + plot_annotation(
+  tag_levels = "A"  # Automatically labels subplots as A, B, C, etc.
+) &
+  theme(plot.tag.position  = c(1, 1))
+
+
+# Monthly detections ------------------------------------------------------
+
+library(dplyr)
+library(ggplot2)
+
+# Convert 'Date' to Date type if necessary
+CombinedWeatherData_alladdgps$Date <- as.Date(CombinedWeatherData_alladdgps$Date)
+
+# Extract month from Date
+CombinedWeatherData_alladdgps$Month <- format(CombinedWeatherData_alladdgps$Date, "%Y-%m")
+
+# Aggregate data by Month, Latitude, Longitude
+monthly_detections <- CombinedWeatherData_alladdgps %>%
+  group_by(Month, Latitude, Longitude) %>%
+  summarise(total_detections = sum(total_count, na.rm = TRUE))  # Sum detections per month per location
+
+ggplot(monthly_detections, aes(x = Longitude, y = Latitude, color = total_detections, size = total_detections)) +
+  geom_point() +
+  facet_wrap(~ Month, scales = "free", ncol = 4) +  # Facet by month
+  scale_color_viridis_c() +  # Choose a color scale
+  labs(x = "Longitude", y = "Latitude",
+       title = "Detections by Latitude, Longitude, and Month",
+       color = "Total Detections", size = "Total Detections") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank()  # Remove minor gridlines
+  )
+
+
+# Example assuming you have a ggplot list `plot_list`
+# Load necessary library for quarter extraction
+library(lubridate)
+
+# Convert Date to a Date class if it's not already
+CombinedWeatherData_alladdgps$Date <- as.Date(CombinedWeatherData_alladdgps$Date)
+
+# Add a 'Quarter' column to the data
+CombinedWeatherData_alladdgps$Quarter <- quarter(CombinedWeatherData_alladdgps$Date, with_year = TRUE)
+
+CombinedWeatherData_alladdgps$Year_season <- paste(
+                     substr(CombinedWeatherData_alladdgps$Date,1,4),CombinedWeatherData_alladdgps$Season,sep='_')
+
+# Create a new data frame with detections grouped by latitude, longitude, and quarter
+monthly_detections <- CombinedWeatherData_alladdgps %>%
+  group_by(Year_season, Latitude, Longitude) %>%
+  summarise(total_detections = sum(n.detection))
+
+# Set the plotting layout: e.g., 2 rows and 2 columns per page (adjust as needed)
+
+ggplot(monthly_detections, aes(x = Longitude, y = Latitude, color = total_detections, size = total_detections)) +
+  geom_point() +
+  facet_wrap(~ Year_season, scales = "free", ncol = 2) +  # Facet by month
+  scale_color_viridis_c() +  # Choose a color scale
+  labs(x = "Longitude", y = "Latitude",
+       title = "",
+       color = "Total Detections", size = "Total Detections") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+    panel.grid.major = element_blank(),  # Remove major gridlines
+    panel.grid.minor = element_blank()  # Remove minor gridlines
+  )+guides(size='none')
