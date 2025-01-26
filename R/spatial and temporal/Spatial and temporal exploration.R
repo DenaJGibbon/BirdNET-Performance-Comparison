@@ -72,6 +72,52 @@ CombinedCallNoCallDF <- rbind.data.frame(CombinedDetectionData,JahooNoCallDF)
 
 CombinedCallNoCallDF$GibbonDetect <- as.numeric(CombinedCallNoCallDF$GibbonDetect)
 
+head(CombinedCallNoCallDF)
+
+library(dplyr)
+library(ggplot2)
+
+# Define the monsoon period (May to October) for the years in your dataset
+monsoon_start_1 <- as.Date("2022-07-01")
+monsoon_end_1 <- as.Date("2022-9-30")
+monsoon_start_2 <- as.Date("2023-07-01")
+monsoon_end_2 <- as.Date("2023-9-30")
+
+# Step 1: Summarize data
+# Step 1: Summarize data
+summary_df <- CombinedCallNoCallDF %>%
+  group_by(Date) %>%
+  summarize(
+    TotalRecorders = n(),
+    Detections = sum(GibbonDetect),
+    ProportionDetected = Detections / TotalRecorders
+  ) %>%
+  filter(Date > as.Date("2022-02-28"))  # Exclude data before March 2022
+
+
+# Step 2: Plot the proportion over time
+ggplot(summary_df, aes(x = as.Date(Date), y = ProportionDetected)) +
+  geom_line(color = "grey", size = 1) +
+  #geom_point(color = "red", size = 2) +
+  labs(
+    #title = "Proportion of Recorders with Detections Over Time",
+    x = "Date",
+    y = "Proportion of Recorders with Detections"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )+
+  geom_smooth(method = "gam", color = "darkgreen", fill = "lightgreen", size = 1.2, alpha = 0.3) +  # Smoothed trend line
+  # Add shaded area for the monsoon period across multiple years
+  geom_rect(aes(xmin = monsoon_start_1, xmax = monsoon_end_1, ymin = -Inf, ymax = Inf),
+            fill = "lightblue", alpha = 0.01) +  # Light blue shading for 2022
+  geom_rect(aes(xmin = monsoon_start_2, xmax = monsoon_end_2, ymin = -Inf, ymax = Inf),
+            fill = "lightblue", alpha = 0.01)    # Light blue shading for 2023
+
+
+
 # Interpolate call density based on GPS data
 recorder.index <- unique(CombinedCallNoCallDF$Recorder)  # Get unique recorders
 
@@ -128,7 +174,7 @@ Jahoo.call.density.plot  # Display plot
 
 # Open PDF device to combine all plots in a single file
 output_pdf <- paste("Combined_Plots_multipanel.pdf")
-pdf(output_pdf, height = 12, width = 12)  # Set height and width to fit two plots per row
+pdf(output_pdf, height = 24, width = 18)  # Set height and width to fit two plots per row
 
 # List to store ggplot objects
 plot_list <- list()
@@ -137,7 +183,7 @@ plot_list <- list()
 recorder.index <- unique(CombinedCallNoCallDF$Recorder)  # Get unique recorders
 month.index <- sort(unique(CombinedCallNoCallDF$Month))
 
-for(w in 1:length(month.index)){
+for(w in c(3:length(month.index))){
   CombinedCallNoCallDFSub <- subset(CombinedCallNoCallDF, Month == month.index[w])
 
   interpolation.df <- data.frame()  # Initialize data frame for interpolation
@@ -159,7 +205,7 @@ for(w in 1:length(month.index)){
 
   interpolation.df <- na.omit(interpolation.df)
 
-  if (nrow(interpolation.df) == 10) {
+  #if (nrow(interpolation.df) == 10) {
     # Prepare data for interpolation and plotting
     interpolation.df.for.pts <- interpolation.df
     x.range <- as.numeric(c(min(interpolation.df$x), max(interpolation.df$x)))  # Set longitude range
@@ -178,7 +224,7 @@ for(w in 1:length(month.index)){
     # Define value ranges and corresponding colors
     breaks <- seq(0, 0.3, length.out = 6)  # Adjust the number of breaks if needed
     # Example breaks within your range
-    colors <- c("blue", "green", "yellow", "red")  # Corresponding colors for the ranges
+    colors <- c("blue", "green", "yellow", "red", "white")  # Corresponding colors for the ranges
 
     # Set the same color scale across all plots
     color_scale <- scale_fill_gradientn(
@@ -202,7 +248,7 @@ for(w in 1:length(month.index)){
 
     plot_list[[w]] <- p  # Add the plot to the list
   }
-}
+#}
 
 plot_list <- plot_list[!sapply(plot_list, is.null)]
 
