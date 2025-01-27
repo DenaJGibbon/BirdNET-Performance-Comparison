@@ -12,6 +12,7 @@ library(gridExtra)
 # Load detection data from a CSV file
 DetectionsDF <- read.csv('/Users/denaclink/Downloads/verified_detections.csv')  # Load verified detection data
 head(DetectionsDF)                                       # Display the first few rows
+nrow(DetectionsDF)
 
 # Load GPS data and format it
 TempFrame <- gpx::read_gpx('/Users/denaclink/Desktop/RStudio Projects/Cambodia-Data-Analysis/Selection Table Data/Bioacoustic Units.gpx')  # Load GPS data
@@ -38,6 +39,7 @@ ggpubr::gghistogram(data = CombinedDetectionData, x = 'Date', stat = "count") +
 
 # Process detection files that don't contain calls
 JahooFilesBase <- list.files("/Users/denaclink/Downloads/JahooBirdNETupdatedmodel", pattern = '.txt', recursive = TRUE, full.names = FALSE)  # List detection files
+length(JahooFilesBase)
 JahooFilesBase <- str_split_fixed(basename(JahooFilesBase), pattern = '.BirdNET', n = 2)[, 1]  # Format file names
 JahooFilesBaseShort <- substr(JahooFilesBase, 1, 17)  # Extract a short version of file names
 
@@ -73,17 +75,18 @@ CombinedCallNoCallDF <- rbind.data.frame(CombinedDetectionData,JahooNoCallDF)
 CombinedCallNoCallDF$GibbonDetect <- as.numeric(CombinedCallNoCallDF$GibbonDetect)
 
 head(CombinedCallNoCallDF)
+range(CombinedCallNoCallDF$Date)
+
 
 library(dplyr)
 library(ggplot2)
 
 # Define the monsoon period (May to October) for the years in your dataset
-monsoon_start_1 <- as.Date("2022-07-01")
-monsoon_end_1 <- as.Date("2022-9-30")
-monsoon_start_2 <- as.Date("2023-07-01")
-monsoon_end_2 <- as.Date("2023-9-30")
+monsoon_start_1 <- as.Date("2022-05-01")
+monsoon_end_1 <- as.Date("2022-10-31")
+monsoon_start_2 <- as.Date("2023-05-01")
+monsoon_end_2 <- as.Date("2023-10-31")
 
-# Step 1: Summarize data
 # Step 1: Summarize data
 summary_df <- CombinedCallNoCallDF %>%
   group_by(Date) %>%
@@ -96,7 +99,7 @@ summary_df <- CombinedCallNoCallDF %>%
 
 
 # Step 2: Plot the proportion over time
-ggplot(summary_df, aes(x = as.Date(Date), y = ProportionDetected)) +
+DetectionsByDatePlot <- ggplot(summary_df, aes(x = as.Date(Date), y = ProportionDetected)) +
   geom_line(color = "grey", size = 1) +
   #geom_point(color = "red", size = 2) +
   labs(
@@ -117,6 +120,48 @@ ggplot(summary_df, aes(x = as.Date(Date), y = ProportionDetected)) +
             fill = "lightblue", alpha = 0.01)    # Light blue shading for 2023
 
 
+# Create a table for total number of hours sampled (denominator)
+total_hours <- table(JahooNoCallDF$Hour)
+
+# Create a table for true positives (numerator)
+true_positives <- table(CombinedDetectionData$Hour)
+
+# Align the data by hour
+hours <- as.numeric(names(total_hours))  # Extract hour labels
+true_positives <- true_positives[as.character(hours)]  # Match hours in the two tables
+true_positives[is.na(true_positives)] <- 0  # Handle hours with no detections
+
+# Calculate standardized rate (True Positives per Total Hours)
+standardized_rate <- true_positives / total_hours
+
+# Create a data frame for visualization
+rate_df <- data.frame(
+  Hour = as.numeric(names(total_hours)),
+  TruePositives = as.numeric(true_positives),
+  TotalHours = as.numeric(total_hours),
+  StandardizedRate = as.numeric(standardized_rate)
+)
+
+rate_df$Time <- format(strptime(rate_df$Hour, format = "%H"), format = "%H:%M")
+rate_df$Time <- factor(rate_df$Time, levels = sort(unique(rate_df$Time)))
+
+# Filter the data frame for hours between 04:00 and 18:00
+rate_df <- rate_df[rate_df$Hour >= 4 & rate_df$Hour <= 18, ]
+
+# Create the bar plot
+StandarizedBarplot <- ggbarplot(data = rate_df, x = 'Time', y = 'StandardizedRate') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylab('Gibbon detections \n per hour') +
+  xlab('Local time')
+
+# Display the plot
+print(StandarizedBarplot)
+
+StandarizedBarplot <- ggbarplot(data=rate_df,x='Time',y='StandardizedRate')+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +ylab('Gibbon detections \n per hour')+xlab('Local time')
+
+cowplot::plot_grid(StandarizedBarplot,DetectionsByDatePlot,
+                   labels = c('A','B'), label_x = 0.9)
 
 # Interpolate call density based on GPS data
 recorder.index <- unique(CombinedCallNoCallDF$Recorder)  # Get unique recorders
@@ -173,8 +218,8 @@ Jahoo.call.density.plot  # Display plot
 # Add monthly -------------------------------------------------------------
 
 # Open PDF device to combine all plots in a single file
-output_pdf <- paste("Combined_Plots_multipanel.pdf")
-pdf(output_pdf, height = 24, width = 18)  # Set height and width to fit two plots per row
+output_pdf <- paste("Combined_Plots_multipanel_wide.pdf")
+pdf(output_pdf, height = 18, width = 32)  # Set height and width to fit two plots per row
 
 # List to store ggplot objects
 plot_list <- list()
@@ -222,15 +267,15 @@ for(w in c(3:length(month.index))){
     names(idw.output)[1:3] <- c("long", "lat", "var1.pred")  # Rename columns
 
     # Define value ranges and corresponding colors
-    breaks <- seq(0, 0.3, length.out = 6)  # Adjust the number of breaks if needed
+    breaks <- seq(0, 0.4, length.out = 6)  # Adjust the number of breaks if needed
     # Example breaks within your range
-    colors <- c("blue", "green", "yellow", "red", "white")  # Corresponding colors for the ranges
+    colors <- c("blue", "green", "yellow","red")  # Corresponding colors for the ranges
 
     # Set the same color scale across all plots
     color_scale <- scale_fill_gradientn(
       colors = colors,
       values = scales::rescale(breaks),
-      limits = c(0.0, 0.3),  # Set the limits to the full range of values
+      limits = c(0.0, 0.4),  # Set the limits to the full range of values
       breaks = breaks  # Define the breaks for the color scale
     )
 
@@ -242,7 +287,7 @@ for(w in c(3:length(month.index))){
       xlab("Longitude") + ylab("Latitude") +  # Set axis labels
       theme_bw() +  # Set theme
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +  # Remove grid lines
-      guides(fill = guide_legend(title = "Jahoo detections \n per hour")) +  # Add legend
+      guides(fill = guide_legend(title = "Hourly gibbon \n detections")) +  # Add legend
       ggtitle(month.index[w]) +  # Add title with the month name
       theme(legend.text = element_text(size = 12), legend.title = element_text(size = 12))  # Style legend
 
@@ -250,11 +295,26 @@ for(w in c(3:length(month.index))){
   }
 #}
 
-plot_list <- plot_list[!sapply(plot_list, is.null)]
+#plot_list <- plot_list[!sapply(plot_list, is.null)]
 
 # Combine all plots into a 2xN grid
-grid.arrange(grobs = plot_list, ncol = 2)
+grid.arrange(grobs = plot_list, ncol = 6)
 
 # Close the PDF device after all plots are added
 dev.off()
 
+month.index
+
+# Open PDF device to combine all plots in a single file
+output_pdf <- paste("Combined_Plots_multipanel_subset.pdf")
+pdf(output_pdf, height = 18, width = 32)  # Set height and width to fit two plots per row
+
+# Subset the list using single brackets [] to extract multiple elements
+#selected_plots <- plot_list[c(3, 4, 8, 9, 15, 16, 20, 21, 27, 28)]
+selected_plots <- plot_list[c(3, 6, 9, 12, 15, 18, 21, 24, 27)]
+
+# Arrange the selected plots in a grid
+grid.arrange(grobs = selected_plots, ncol = 4)
+
+# Close the PDF device after all plots are added
+dev.off()
