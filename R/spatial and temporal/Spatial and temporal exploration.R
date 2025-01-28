@@ -218,8 +218,8 @@ Jahoo.call.density.plot  # Display plot
 # Add monthly -------------------------------------------------------------
 
 # Open PDF device to combine all plots in a single file
-output_pdf <- paste("Combined_Plots_multipanel_wide.pdf")
-pdf(output_pdf, height = 18, width = 32)  # Set height and width to fit two plots per row
+output_pdf <- paste("Combined_Plots_multipanel_wide.tiff")
+tiff(output_pdf, height = 4800, width = 3200)  # Set height and width to fit two plots per row
 
 # List to store ggplot objects
 plot_list <- list()
@@ -298,7 +298,7 @@ for(w in c(3:length(month.index))){
 #plot_list <- plot_list[!sapply(plot_list, is.null)]
 
 # Combine all plots into a 2xN grid
-grid.arrange(grobs = plot_list, ncol = 6)
+grid.arrange(grobs = plot_list, ncol = 4)
 
 # Close the PDF device after all plots are added
 dev.off()
